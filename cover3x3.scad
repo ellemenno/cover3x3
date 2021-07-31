@@ -38,7 +38,7 @@ module torus(big_r=5, little_r=1.5, fs=0.5) {
 module piece(w, h, thickness=1, marked=true, solid=false, fs=0.5) {
   r = w/2;
   h1 = h-thickness;
-  r1 = (w-(thickness*2))/2;
+  r1 = r-thickness;
   t = thickness/2;
 
   difference() {
