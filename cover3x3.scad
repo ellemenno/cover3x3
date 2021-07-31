@@ -35,6 +35,14 @@ module torus(big_r=5, little_r=1.5, fs=0.5) {
   circle(r=little_r, $fs=fs);
 }
 
+module round_inner(big_r=5, little_r=1.5, fs=0.5) {
+  translate([0, 0, -little_r])
+  difference() {
+    cylinder(h=big_r, r=big_r, $fs=fs);
+    torus(big_r+little_r, little_r, fs);
+  }
+}
+
 module piece(w, h, thickness=1, marked=true, solid=false, fs=0.5) {
   r = w/2;
   h1 = h-thickness;
@@ -43,9 +51,8 @@ module piece(w, h, thickness=1, marked=true, solid=false, fs=0.5) {
 
   difference() {
     hull() {
-      translate([0,0,t])
-      torus(big_r=r, little_r=t);
-      translate([ 0, 0, h/2+t]) cylinder($fs=fs, h=h-t, r=r, center=true);
+      translate([0,0,t]) torus(big_r=r, little_r=t);
+      translate([0, 0, h/2+t/2]) cylinder($fs=fs, h=h-t, r=r, center=true);
     }
     if (marked) {
       translate([0,0,-t/2]) torus(r*.7, t);
@@ -66,24 +73,36 @@ module piece_set(sm, md, lg, thickness=4, marked=true) {
   translate([-(lg.x+md.x), lg.x, 0]) piece(sm.x, sm.y, thickness, marked, solid=true);
 }
 
-module piece_grid(size, spacing=2, air_gap=1) {
-  module piece_row(w, h, s) {
-    translate([w*0+s*0*2, 0, 0]) piece(w, h, solid=true, marked=false);
-    translate([w*1+s*1*2, 0, 0]) piece(w, h, solid=true, marked=false);
-    translate([w*2+s*2*2, 0, 0]) piece(w, h, solid=true, marked=false);
+module hole_grid(size, spacing=2, air_gap=1, fs=0.5) {
+  module hole_row(w, h, s) {
+    translate([w*0+s*0*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
+    translate([w*1+s*1*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
+    translate([w*2+s*2*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
   }
-  r = size.x + air_gap*2;
-  translate([r+spacing, r/2+spacing, 0]) {
-    translate([0, r*0+spacing*0*2, 0]) piece_row(r, size.y, spacing);
-    translate([0, r*1+spacing*1*2, 0]) piece_row(r, size.y, spacing);
-    translate([0, r*2+spacing*2*2, 0]) piece_row(r, size.y, spacing);
+  w = size.x + air_gap*2;
+  translate([w+spacing, w/2+spacing, 0]) {
+    translate([0, w*0+spacing*0*2, 0]) hole_row(w, size.y, spacing);
+    translate([0, w*1+spacing*1*2, 0]) hole_row(w, size.y, spacing);
+    translate([0, w*2+spacing*2*2, 0]) hole_row(w, size.y, spacing);
   }
 }
 
-//--- construction
+module rounder_grid(size, spacing=2, air_gap=1, f=3) {
+  module rounder_row(w, r, s, f) {
+    translate([w*0+s*0*2, 0, 0]) round_inner(r, f);
+    translate([w*1+s*1*2, 0, 0]) round_inner(r, f);
+    translate([w*2+s*2*2, 0, 0]) round_inner(r, f);
+  }
+  w = size.x + air_gap*2;
+  r = w/2;
+  translate([w+spacing, r+spacing, 0]) {
+    translate([0, w*0+spacing*0*2, 0]) rounder_row(w, r+f, spacing, f);
+    translate([0, w*1+spacing*1*2, 0]) rounder_row(w, r+f, spacing, f);
+    translate([0, w*2+spacing*2*2, 0]) rounder_row(w, r+f, spacing, f);
+  }
+}
 
-// box and gameboard
-color("white") {
+module box_and_gameboard() {
   union() {
     // box base
     slide_top_box(
@@ -95,7 +114,8 @@ color("white") {
     translate([box_size.x, 0, 0])
     difference() {
       cube([wall_thickness, box_size.y, box_size.z]);
-      translate([0, piece_spacing+air_gap, box_size.z-piece_spacing+lg.x/2]) rotate([0, 90, 0]) piece_grid(lg, piece_spacing, air_gap);
+      translate([0, piece_spacing+air_gap, box_size.z-piece_spacing+lg.x/2]) rotate([0, 90, 0]) hole_grid(lg, piece_spacing, air_gap);
+      translate([wall_thickness, piece_spacing+air_gap, box_size.z-piece_spacing+lg.x/2]) rotate([0, 90, 0]) rounder_grid(lg, piece_spacing, air_gap, wall_thickness/3);
     }
   }
 
@@ -108,6 +128,12 @@ color("white") {
     );
   }
 }
+
+
+//--- assembly
+
+// gameboard
+color("white") box_and_gameboard();
 
 // pieces, behind box
 translate([-lg.x/2-piece_thickness, lg.y/2+piece_thickness, 0]) {
