@@ -8,10 +8,10 @@ use <slide_top_box.scad>
 
 //--- parameters
 
-wall_thickness = 3;
-piece_thickness = 2;
+wall_thickness = 5;
+piece_thickness = 3;
 piece_spacing = 2;
-sm_piece_diameter = 16;
+sm_piece_diameter = 24;
 air_gap = 1; // stacking clearance
 
 // computed variables
@@ -27,6 +27,16 @@ box_size = slide_top_box_size(
 );
 
 //--- assembly
+
+echo("- - - - - - - -");
+echo("cover3x3");
+ind = "    ";
+echo(str(ind, "v0.0.3"));
+echo(str(ind, "board size of ", box_size));
+echo(str(ind, sm_piece_diameter, "mm small piece"));
+echo(str(ind, wall_thickness, "mm wall thickness"));
+echo(str(ind, piece_thickness, "mm piece thickness"));
+echo("- - - - - - - -");
 
 // gameboard
 color("white") box_and_gameboard(box_size, wall_thickness, piece_spacing, air_gap);
