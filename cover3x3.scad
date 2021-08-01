@@ -10,7 +10,7 @@ use <slide_top_box.scad>
 
 wall_thickness = 5;
 piece_thickness = 3;
-piece_spacing = 2;
+piece_spacing = 3;
 sm_piece_diameter = 24;
 air_gap = 1; // stacking clearance
 
@@ -109,7 +109,8 @@ module hole_grid(size, spacing=2, air_gap=1, fs=0.5) {
     translate([w*2+s*2*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
   }
   w = size.x + air_gap*2;
-  translate([w+spacing, w/2+spacing, 0]) {
+  r = w/2;
+  translate([r+spacing, r+spacing, 0]) {
     translate([0, w*0+spacing*0*2, 0]) hole_row(w, size.y, spacing);
     translate([0, w*1+spacing*1*2, 0]) hole_row(w, size.y, spacing);
     translate([0, w*2+spacing*2*2, 0]) hole_row(w, size.y, spacing);
@@ -124,7 +125,7 @@ module rounder_grid(size, spacing=2, air_gap=1, f=3) {
   }
   w = size.x + air_gap*2;
   r = w/2;
-  translate([w+spacing, r+spacing, 0]) {
+  translate([r+spacing, r+spacing, 0]) {
     translate([0, w*0+spacing*0*2, 0]) rounder_row(w, r+f, spacing, f);
     translate([0, w*1+spacing*1*2, 0]) rounder_row(w, r+f, spacing, f);
     translate([0, w*2+spacing*2*2, 0]) rounder_row(w, r+f, spacing, f);
@@ -136,6 +137,7 @@ module box_and_gameboard(box_size, wall_thickness, piece_spacing, air_gap) {
   y = box_size.y;
   z = box_size.z;
   f = wall_thickness/3;
+
   difference() {
     union() {
       // box base
@@ -144,8 +146,10 @@ module box_and_gameboard(box_size, wall_thickness, piece_spacing, air_gap) {
       translate([box_size.x, 0, 0])
       difference() {
         cube([wall_thickness, box_size.y, box_size.z]);
-        translate([0, piece_spacing+air_gap, box_size.z-piece_spacing+lg.x/2]) rotate([0, 90, 0]) hole_grid(lg, piece_spacing, air_gap);
-        translate([wall_thickness, piece_spacing+air_gap, box_size.z-piece_spacing+lg.x/2]) rotate([0, 90, 0]) rounder_grid(lg, piece_spacing, air_gap, f);
+        translate([0, 0, box_size.z-wall_thickness]) {
+          translate([0, wall_thickness, 0]) rotate([0, 90, 0]) hole_grid(lg, piece_spacing, air_gap);
+          translate([wall_thickness, wall_thickness, 0]) rotate([0, 90, 0]) rounder_grid(lg, piece_spacing, air_gap, f);
+        }
       }
     }
 
