@@ -39,7 +39,7 @@ echo(str(ind, piece_thickness, "mm piece thickness"));
 echo("- - - - - - - -");
 
 // gameboard
-color("white") box_and_gameboard(box_size, wall_thickness, piece_spacing, air_gap);
+color("white") box_and_gameboard(box_size, wall_thickness, [sm, md, lg], piece_spacing, air_gap);
 
 // pieces, behind box
 translate([-lg.x/2-piece_thickness, lg.y/2+piece_thickness, 0]) {
@@ -132,16 +132,52 @@ module rounder_grid(size, spacing=2, air_gap=1, f=3) {
   }
 }
 
-module box_and_gameboard(box_size, wall_thickness, piece_spacing, air_gap) {
+module piece_holder(size, r, t, a, fs=0.5) {
+  // r: piece radius
+  // t: wall thickness
+  // a: air gap
+  x = size.x-t*2; // box cavity height / piece height
+  yy = (size.y - (r+t+a)*4) / 2; // distance from edge of box to holder
+
+  module u_holder() {
+    difference() {
+      hull() {
+        translate([0, (r+t+a), (r+t+a)]) rotate([0, 90, 0]) cylinder(h=x, r=r+t+a, $fs=fs);
+        translate([0, 0, (r+t+a)*2]) cube([x, (r+t+a)*2, (r+t+a)*2]);
+      }
+      translate([-a, t, t])
+      hull() {
+        translate([0, r+a, r+a]) rotate([0, 90, 0]) cylinder(h=x+a*2, r=r+a, $fs=fs);
+        translate([0, 0, (r+t+t)*2]) cube([x+a*2, (r+a)*2, (r+a)*2]);
+      }
+    }
+  }
+
+  union() {
+    cube([x, yy, t]);
+    translate([0, yy, 0]) {
+      translate([0, 0, -(r+t+a)*4+t]) u_holder();
+      translate([0, (r+t+a)*2, -(r+t+a)*4+t]) u_holder();
+    }
+    translate([0, yy+((r+t+a)*4), 0]) cube([x, yy, t]);
+  }
+}
+
+module box_and_gameboard(box_size, wall_thickness, pieces, piece_spacing, air_gap) {
   x = box_size.x + wall_thickness;
   y = box_size.y;
   z = box_size.z;
   f = wall_thickness/3;
+  sm = pieces[0];
+  md = pieces[1];
+  lg = pieces[2];
 
   difference() {
     union() {
       // box base
       slide_top_box(box_size, wall_thickness, f);
+      // piece holder
+      translate([wall_thickness, 0, box_size.z-wall_thickness*2]) piece_holder(box_size, lg.x/2, wall_thickness, air_gap);
       // piece plate, minus holes, then rounded inner edges
       translate([box_size.x, 0, 0])
       difference() {
