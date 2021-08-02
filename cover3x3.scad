@@ -15,13 +15,13 @@ sm_piece_diameter = 24;
 air_gap = 1; // stacking clearance
 
 // computed variables
-sm = [sm_piece_diameter, sm_piece_diameter]; // small piece w, h
-md = [sm.x+piece_thickness*2+air_gap, sm.y+piece_thickness+air_gap]; // medium
-lg = [md.x+piece_thickness*2+air_gap, md.y+piece_thickness+air_gap]; // large
+sm = sm_piece_diameter;
+md = sm+piece_thickness*2+air_gap; // medium
+lg = md+piece_thickness*2+air_gap; // large
 
-board_dim = 3 * (lg.x+air_gap*2 + (piece_spacing*2));
+board_dim = 3 * (lg+air_gap*2 + (piece_spacing*2));
 box_size = slide_top_box_size(
-  size=[lg.y+2+(wall_thickness*2), board_dim, board_dim],
+  size=[lg+2+(wall_thickness*2), board_dim, board_dim],
   thickness=wall_thickness,
   is_interior_size=true
 );
@@ -42,9 +42,9 @@ echo("- - - - - - - -");
 color("white") box_and_gameboard(box_size, wall_thickness, [sm, md, lg], piece_spacing, air_gap);
 
 // pieces, behind box
-translate([-lg.x/2-piece_thickness, lg.y/2+piece_thickness, 0]) {
-  color("red")       translate([0,      0, 0]) piece_set(sm, md, lg, piece_thickness, marked=true);
-  color("royalblue") translate([0, lg.x*2, 0]) piece_set(sm, md, lg, piece_thickness, marked=false);
+translate([-lg/2-piece_thickness, lg/2+piece_thickness, 0]) {
+  color("red")       translate([0,    0, 0]) piece_set(sm, md, lg, piece_thickness, marked=true);
+  color("royalblue") translate([0, lg*2, 0]) piece_set(sm, md, lg, piece_thickness, marked=false);
 }
 
 
@@ -93,37 +93,37 @@ module piece(w, h, thickness=1, marked=true, solid=false, fs=0.5) {
 }
 
 module piece_set(sm, md, lg, thickness=4, marked=true) {
-  gap = md.x - sm.x;
-  translate([               0,    0, 0]) piece(sm.x, sm.y, thickness, marked, solid=true);
-  translate([           -md.x,    0, 0]) piece(md.x, md.y, thickness, marked);
-  translate([    -(md.x+lg.x),    0, 0]) piece(lg.x, lg.y, thickness, marked);
-  translate([               0, lg.x, 0]) piece(lg.x, lg.y, thickness, marked);
-  translate([         -(lg.x), lg.x, 0]) piece(md.x, md.y, thickness, marked);
-  translate([-(lg.x+md.x), lg.x, 0]) piece(sm.x, sm.y, thickness, marked, solid=true);
+  gap = md - sm;
+  translate([       0,  0, 0]) piece(sm, sm, thickness, marked, solid=true);
+  translate([     -md,  0, 0]) piece(md, md, thickness, marked);
+  translate([-(md+lg),  0, 0]) piece(lg, lg, thickness, marked);
+  translate([       0, lg, 0]) piece(lg, lg, thickness, marked);
+  translate([   -(lg), lg, 0]) piece(md, md, thickness, marked);
+  translate([-(lg+md), lg, 0]) piece(sm, sm, thickness, marked, solid=true);
 }
 
-module hole_grid(size, spacing=2, air_gap=1, fs=0.5) {
+module hole_grid(diameter, spacing=2, air_gap=1, fs=0.5) {
   module hole_row(w, h, s) {
     translate([w*0+s*0*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
     translate([w*1+s*1*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
     translate([w*2+s*2*2, 0, 0]) cylinder(h=h, r=w/2, $fs=fs);
   }
-  w = size.x + air_gap*2;
+  w = diameter + air_gap*2;
   r = w/2;
   translate([r+spacing, r+spacing, 0]) {
-    translate([0, w*0+spacing*0*2, 0]) hole_row(w, size.y, spacing);
-    translate([0, w*1+spacing*1*2, 0]) hole_row(w, size.y, spacing);
-    translate([0, w*2+spacing*2*2, 0]) hole_row(w, size.y, spacing);
+    translate([0, w*0+spacing*0*2, 0]) hole_row(w, diameter, spacing);
+    translate([0, w*1+spacing*1*2, 0]) hole_row(w, diameter, spacing);
+    translate([0, w*2+spacing*2*2, 0]) hole_row(w, diameter, spacing);
   }
 }
 
-module rounder_grid(size, spacing=2, air_gap=1, f=3) {
+module rounder_grid(diameter, spacing=2, air_gap=1, f=3) {
   module rounder_row(w, r, s, f) {
     translate([w*0+s*0*2, 0, 0]) round_inner(r, f);
     translate([w*1+s*1*2, 0, 0]) round_inner(r, f);
     translate([w*2+s*2*2, 0, 0]) round_inner(r, f);
   }
-  w = size.x + air_gap*2;
+  w = diameter + air_gap*2;
   r = w/2;
   translate([r+spacing, r+spacing, 0]) {
     translate([0, w*0+spacing*0*2, 0]) rounder_row(w, r+f, spacing, f);
@@ -132,12 +132,12 @@ module rounder_grid(size, spacing=2, air_gap=1, f=3) {
   }
 }
 
-module piece_holder(size, r, t, a, fs=0.5) {
+module piece_holder(box_size, r, t, a, f, fs=0.5) {
   // r: piece radius
   // t: wall thickness
   // a: air gap
-  x = size.x-t*2; // box cavity height / piece height
-  yy = (size.y - (r+t+a)*4) / 2; // distance from edge of box to holder
+  x = box_size.x-t*2; // box cavity height / piece height
+  yy = (box_size.y - (r+t+a)*4) / 2; // distance from edge of box to holder
 
   module u_holder() {
     difference() {
@@ -153,13 +153,21 @@ module piece_holder(size, r, t, a, fs=0.5) {
     }
   }
 
-  union() {
-    cube([x, yy, t]);
-    translate([0, yy, 0]) {
-      translate([0, 0, -(r+t+a)*4+t]) u_holder();
-      translate([0, (r+t+a)*2, -(r+t+a)*4+t]) u_holder();
+  difference() {
+    union() {
+      cube([x, yy, t]);
+      translate([0, yy, 0]) {
+        translate([0, 0, -(r+t+a)*4+t]) u_holder();
+        translate([0, (r+t+a)*2, -(r+t+a)*4+t]) u_holder();
+      }
+      translate([0, yy+((r+t+a)*4), 0]) cube([x, yy, t]);
     }
-    translate([0, yy+((r+t+a)*4), 0]) cube([x, yy, t]);
+
+    gap = a+r+r+a;
+    translate([0, yy+t, t]) rotate([ 0, 0, 0]) round_linear(x, f);
+    translate([0, yy+t+gap, t]) rotate([90, 0, 0]) round_linear(x, f);
+    translate([0, yy+t+gap+t+t, t]) rotate([ 0, 0, 0]) round_linear(x, f);
+    translate([0, yy+t+gap+t+t+gap, t]) rotate([90, 0, 0]) round_linear(x, f);
   }
 }
 
@@ -177,7 +185,7 @@ module box_and_gameboard(box_size, wall_thickness, pieces, piece_spacing, air_ga
       // box base
       slide_top_box(box_size, wall_thickness, f);
       // piece holder
-      translate([wall_thickness, 0, box_size.z-wall_thickness*2]) piece_holder(box_size, lg.x/2, wall_thickness, air_gap);
+      translate([wall_thickness, 0, box_size.z-wall_thickness*2]) piece_holder(box_size, lg/2, wall_thickness, air_gap, f);
       // piece plate, minus holes, then rounded inner edges
       translate([box_size.x, 0, 0])
       difference() {
