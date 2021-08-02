@@ -1,7 +1,7 @@
 //----------------------------
 // cover3x3 game
 // pieces fit inside gameboard
-// v0.0.4
+// v0.0.5
 
 
 use <slide_top_box.scad>
@@ -31,7 +31,7 @@ box_size = slide_top_box_size(
 echo("- - - - - - - -");
 echo("cover3x3");
 ind = "    ";
-echo(str(ind, "v0.0.4"));
+echo(str(ind, "v0.0.5"));
 echo(str(ind, "board size of ", box_size));
 echo(str(ind, sm_piece_diameter, "mm small piece"));
 echo(str(ind, wall_thickness, "mm wall thickness"));
