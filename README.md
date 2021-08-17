@@ -21,11 +21,11 @@ each player starts with 2 full stacks of the same color.
 
 ## play
 
-players take turns placing cups of their color, either from one of their stacks onto the board, or by moving from one location on the board to another.
+players take turns placing cups of their color, either from one of their stacks onto the board, or from one location on the board to another.
 
 moving from one board location to another may uncover a cup, which is then in play.
 
-cups can be placed on empty squares, or to cover a cup of a smaller size, of either color.
+cups can be placed on empty squares, or to cover a cup of a smaller size of either color.
 
 ## finish
 
